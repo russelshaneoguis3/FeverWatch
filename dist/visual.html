@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FeverWatch | Graphs/Charts</title>
+    <script defer src="./bundle.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Data From Firebase to DataTables -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.25/datatables.min.css" />
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.25/datatables.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-firestore.js"></script>
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    
+<!-- src for chartjs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<link rel="shortcut icon" type="x-icon" href="temperature.png">
+
+<style>
+
+body {
+    background-image: url("bg.jpg");
+    height: 110vh;
+	background-position: center;
+ 	background-repeat: no-repeat;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+}
+
+
+.btn-secondary.active,
+.btn-secondary:active,
+.open > .dropdown-toggle.btn-secondary {
+  color: #ffff;
+  background-color: #6c757d ;
+  border-color: #6c757d ;
+}
+#logout:hover {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+#homie:hover {
+  color: #000000;
+  background-color: #29fa6e;
+  border-color: #29fa6e;
+}
+
+
+.card {
+
+    width: 1200px;
+    height: 600px;
+    margin: 20px auto;
+  
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border:1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.navbar {
+  background: rgb(144,231,238);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.chart-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 50px;
+}
+
+.chart-container canvas {
+  width: 60%;
+}
+
+#pie{
+  max-width:350px;
+  max-height:350px;
+}
+
+#bar{
+  max-width:500px;
+  max-height:350px;
+}
+
+
+</style>
+
+
+<body>
+
+  <!-- navbar start -->
+    <nav class="navbar navbar-expand-lg ">
+      
+        <div class="container-fluid">
+          
+          <a class="navbar-brand" style="color: black; text-shadow: 1px 1px #ffffff;"><b>FeverWatch</b> | Patients Body Temperature Monitoring<span id="username"></span></a> 
+
+          <button type="button" id="logout" name="logout" class="btn btn-secondary active" style="text-shadow: 1px 1px #000000; box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">Logout</button>
+          </div></nav>
+
+    <!-- navbar end -->
+          
+          <div class="card">
+            <div class="card-body success">
+              <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Patients Graph/Chart Visualization</h3><br>
+              <a href="home.html" class="btn btn-info" id="homie" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">🡰 Home </a> <br>
+
+              <br>
+
+            <!-- charts code  -->
+            <div>
+              <h5 style="display: inline-block; margin-left: 120px;">Patients Count Male/Female (Pie Chart)</h5>
+              <h5 style="display: inline-block; margin-left: 160px;">Patients Average Age Male/Female (bar chart)</h5>
+            </div>
+
+            <div class="chart-container">
+            <!-- pie chart -->
+            <br>
+            <canvas id="pie"></canvas>
+            
+            <br>
+            <canvas id="bar"></canvas>
+            </div>
+
+          
+            </div>
+          </div>
+                  
+          <br>
+
+</body>
+</html>   
+
+<script type = "module">
+
+ // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-analytics.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, getDocs, getDoc,updateDoc, setDoc, doc, onSnapshot, deleteDoc, orderBy } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+    apiKey: "AIzaSyDnNVNMvhv8GsziO7itIZ3Y8wXkgpxWcMc",
+    authDomain: "feverwatch-87773.firebaseapp.com",
+    projectId: "feverwatch-87773",
+    storageBucket: "feverwatch-87773.appspot.com",
+    messagingSenderId: "377834979816",
+    appId: "1:377834979816:web:16a15fdab1d32b94f0a45d",
+    measurementId: "G-LBRMBDYJQH"
+};
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    // const auth = getAuth();
+    console.log(app)
+
+  //Firestore
+
+//DataTables
+firebase.initializeApp(firebaseConfig);
+const db2 = firebase.firestore();
+
+//logout function 
+const logoutBtn = document.querySelector("#logout");
+logoutBtn.addEventListener("click", ()=>{
+window.location.replace("index.html");
+});
+
+//charts codes
+//pie chart codes
+// Initialize data array for the chart
+var data = {
+  labels: ['Male Count', 'Female Count'],
+  datasets: [{
+    label: 'Number of Patients',
+    data: [0, 0],
+    borderWidth: 1,
+    backgroundColor: ['#20B2AA', '#DDA0DD']
+  }],
+};
+
+// Retrieve data from Firestore
+db2.collection("patients").get().then((snapshot) => {
+  snapshot.forEach((doc) => {
+    const gender = doc.data().sex;
+    if (gender === 'male') {
+      data.datasets[0].data[0]++;
+    } else if (gender === 'female') {
+      data.datasets[0].data[1]++;
+    }
+  });
+  
+// Create pie chart using Chart.js
+  const ptx = document.getElementById('pie');
+  new Chart(ptx, {
+    type: 'pie',
+    data: data,
+    options: {
+      radius: '100%',
+    },
+  });
+});
+
+// Initialize data array for the chart
+var data2 = {
+  labels: ['Male Average Age', 'Female Average Age'],
+  datasets: [{
+    label: 'Average Age',
+    data: [0, 0],
+    borderWidth: 1,
+    backgroundColor: ['#20B2AA', '#DDA0DD']
+  }],
+};
+
+// Retrieve data from Firestore
+db2.collection("patients").get().then((snapshot) => {
+  let maleSum = 0;
+  let maleCount = 0;
+  let femaleSum = 0;
+  let femaleCount = 0;
+  
+  snapshot.forEach((doc) => {
+    const gender = doc.data().sex;
+    const age = parseInt(doc.data().age);
+    
+    if (gender === 'male') {
+      maleSum += age;
+      maleCount++;
+    } else if (gender === 'female') {
+      femaleSum += age;
+      femaleCount++;
+    }
+  });
+  
+  const maleAvg = maleCount > 0 ? maleSum / maleCount : 0;
+  const femaleAvg = femaleCount > 0 ? femaleSum / femaleCount : 0;
+  
+  // Update data array with average age
+  data2.datasets[0].data[0] = maleAvg;
+  data2.datasets[0].data[1] = femaleAvg;
+  
+  // Create bar chart using Chart.js
+  const btx = document.getElementById('bar');
+  new Chart(btx, {
+    type: 'bar',
+    data: data2,
+    options: {
+
+      scales: {
+        yAxes: [{
+          ticks: {     
+            beginAtZero: true,
+          }
+        }]
+      }
+    }
+  });
+});
+
+</script>
