@@ -36,8 +36,8 @@
 body {
     background-image: url("bg.jpg");
     height: 110vh;
-	background-position: center;
- 	background-repeat: no-repeat;
+	  background-position: center;
+ 	  background-repeat: no-repeat;
     background-size: cover;
     margin: 0;
     padding: 0;
@@ -66,7 +66,7 @@ body {
 
 .card {
 
-    width: 1200px;
+    width: 1250px;
     height: 600px;
     margin: 20px auto;
   
@@ -76,6 +76,34 @@ body {
     border-radius: 20px;
     border:1px solid rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+#cardPatient1 {
+
+    width: 500px;
+    height: 350px;
+  
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border:1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+}
+
+#cardPatient2 {
+
+  width: 500px;
+  height: 350px;
+
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border:1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
 }
 
 .navbar {
@@ -105,6 +133,32 @@ body {
   max-height:350px;
 }
 
+#temperatureCircle1 {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+#temperatureCircle2 {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+@keyframes blink {
+            0% { background-color: red; }
+            50% { background-color: maroon; }
+            100% { background-color: red; }
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
 
 </style>
 
@@ -125,27 +179,45 @@ body {
           
           <div class="card">
             <div class="card-body success">
-              <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Patients Graph/Chart Visualization</h3><br>
+              <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Body Temperature</h3><br>
               <a href="home.html" class="btn btn-info" id="homie" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">🡰 Home </a> <br>
 
               <br>
 
-            <!-- charts code  -->
-            <div>
-              <h5 style="display: inline-block; margin-left: 120px;">Patients Count Male/Female (Pie Chart)</h5>
-              <h5 style="display: inline-block; margin-left: 160px;">Patients Average Age Male/Female (bar chart)</h5>
-            </div>
-
+              <!-- Patient 1 card end -->
             <div class="chart-container">
-            <!-- pie chart -->
-            <br>
-            <canvas id="pie"></canvas>
-            
-            <br>
-            <canvas id="bar"></canvas>
-            </div>
 
-          
+            <!-- Patient 1 card -->
+              <div id="cardPatient1">
+                <div class="card-body">
+                  <h4 class="card-title">
+                    
+                    <span id="temperatureCircle1"></span>
+                    <span id="patientName1" style="text-shadow: 1px 1px #ffffff;"></span>
+                    
+                  </h5>
+                  <h5 class="card-text">Body temperature: <b> <span id="temperatureValue1"> </span> °C</b></h5>
+
+                </div>
+                <!-- chart container start -->
+              </div>   
+              
+              <!-- Patient 2 card -->
+              <div id="cardPatient2">
+                <div class="card-body">
+                  <h4 class="card-title">
+
+                    <span id="temperatureCircle2"></span>
+                    <span id="patientName2" style="text-shadow: 1px 1px #ffffff;"></span>
+                    
+                  </h5>
+                  <h5 class="card-text">Body temperature: <b> <span id="temperatureValue2"> </span> °C</b></h5>
+
+                </div>
+              </div>   
+              <!-- Patient 2 card end -->
+            </div>
+            <!-- chat container end -->
             </div>
           </div>
                   
@@ -183,7 +255,7 @@ body {
     // const auth = getAuth();
     console.log(app)
 
-  //Firestore
+//Firestore
 
 firebase.initializeApp(firebaseConfig);
 const db2 = firebase.firestore();
@@ -196,94 +268,72 @@ window.location.replace("index.html");
 
 //charts codes
 
-//pie chart code
-// Initialize data array for the chart
-var data = {
-  labels: ['Male Count', 'Female Count'],
-  datasets: [{
-    label: 'Number of Patients',
-    data: [0, 0],
-    borderWidth: 1,
-    backgroundColor: ['#20B2AA', '#F45050']
-  }],
-};
+// Retrieve data from Firestore
 
 // Retrieve data from Firestore
-db2.collection("patients").get().then((snapshot) => {
-  snapshot.forEach((doc) => {
-    const gender = doc.data().sex;
-    if (gender === 'male') {
-      data.datasets[0].data[0]++;
-    } else if (gender === 'female') {
-      data.datasets[0].data[1]++;
+const docRef = db2.collection("patients").doc("JtJHlojcoAdX9f0GjB21");
+
+//patient 1 temperature value
+const circleElement = document.getElementById("temperatureCircle1");
+const patientNameElement = document.getElementById("patientName1");
+const temperatureValueElement = document.getElementById("temperatureValue1");
+
+docRef.onSnapshot((doc) => {
+  if (doc.exists) {
+    const data = doc.data();
+    const temperature = data.temperature;
+
+    // Update the temperature value
+    temperatureValueElement.textContent = temperature;
+
+    // Update the patient name
+    patientNameElement.textContent = data.name;
+
+    // Update the circle's color based on the temperature range
+    if (temperature < 36 || temperature >= 38) {
+      circleElement.classList.add("blink"); // Add blink class
+      circleElement.style.backgroundColor = "red";
+    } else if (temperature >= 36 && temperature < 38) {
+      circleElement.classList.remove("blink"); // Remove blink class
+      circleElement.style.backgroundColor = "green";
     }
-  });
-  
-// Create pie chart using Chart.js
-  const ptx = document.getElementById('pie');
-  new Chart(ptx, {
-    type: 'pie',
-    data: data,
-    options: {
-      radius: '100%',
-    },
-  });
+
+  } else {
+    console.log("No such document!");
+  }
 });
 
-// Initialize data array for the chart
-var data2 = {
-  labels: ['Male Average Age', 'Female Average Age'],
-  datasets: [{
-    label: 'Average Age',
-    data: [0, 0],
-    borderWidth: 1,
-    backgroundColor: ['#20B2AA', '#F45050']
-  }],
-};
-
 // Retrieve data from Firestore
-db2.collection("patients").get().then((snapshot) => {
-  let maleSum = 0;
-  let maleCount = 0;
-  let femaleSum = 0;
-  let femaleCount = 0;
-  
-  snapshot.forEach((doc) => {
-    const gender = doc.data().sex;
-    const age = parseInt(doc.data().age);
-    
-    if (gender === 'male') {
-      maleSum += age;
-      maleCount++;
-    } else if (gender === 'female') {
-      femaleSum += age;
-      femaleCount++;
-    }
-  });
-  
-  const maleAvg = maleCount > 0 ? maleSum / maleCount : 0;
-  const femaleAvg = femaleCount > 0 ? femaleSum / femaleCount : 0;
-  
-  // Update data array with average age
-  data2.datasets[0].data[0] = maleAvg;
-  data2.datasets[0].data[1] = femaleAvg;
-  
-  // Create bar chart using Chart.js
-  const btx = document.getElementById('bar');
-  new Chart(btx, {
-    type: 'bar',
-    data: data2,
-    options: {
+const docRef2 = db2.collection("patients").doc("uItujyLVyHk74CvoA4Eq");
 
-      scales: {
-        yAxes: [{
-          ticks: {     
-            beginAtZero: true,
-          }
-        }]
-      }
+//patient 2 temperature value
+const circleElement2 = document.getElementById("temperatureCircle2");
+const patientNameElement2 = document.getElementById("patientName2");
+const temperatureValueElement2 = document.getElementById("temperatureValue2");
+
+docRef2.onSnapshot((doc) => {
+  if (doc.exists) {
+    const data = doc.data();
+    const temperature = data.temperature;
+
+    // Update the temperature value
+    temperatureValueElement2.textContent = temperature;
+
+    // Update the patient name
+    patientNameElement2.textContent = data.name;
+
+    // Update the circle's color based on the temperature range
+    if (temperature < 36 || temperature >= 38) {
+      circleElement2.classList.add("blink"); // Add blink class
+      circleElement2.style.backgroundColor = "red";
+    } else if (temperature >= 36 && temperature < 38) {
+      circleElement2.classList.remove("blink"); // Remove blink class
+      circleElement2.style.backgroundColor = "green";
     }
-  });
+
+  } else {
+    console.log("No such document!");
+  }
 });
 
 </script>

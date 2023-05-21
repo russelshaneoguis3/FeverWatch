@@ -63,6 +63,12 @@ body {
   border-color: #dc3545;
 }
 
+#monitor:hover {
+  color: #000000;
+  background-color: #29fa6e;
+  border-color: #29fa6e;
+}
+
 #data:hover {
   color: #000000;
   background-color: #29fa6e;
@@ -120,12 +126,12 @@ tbody {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-
 </style>
 
 
 <body>
 
+  <!-- navbar start -->
     <nav class="navbar navbar-expand-lg ">
       
         <div class="container-fluid">
@@ -134,14 +140,22 @@ tbody {
 
           <button type="button" id="logout" name="logout" class="btn btn-secondary active" style="text-shadow: 1px 1px #000000; box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">Logout</button>
           </div></nav>
-
+  <!-- navbar end -->
     
           
           <div class="card">
             <div class="card-body success">
+
               <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Patients List</h3><br>
-              <a href="visual.html" class="btn btn-info" id="data" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">📈Data Graphs </a> &nbsp;
-              <a href="addpatient.html" class="btn btn-primary" id="add" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">➕Add Patient </a>
+
+               <!-- monitoring button -->
+               <a href="monitor.html" class="btn btn-primary" id="monitor" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);"> 🌡MonitorPatient </a> &nbsp;
+
+              <!-- graph button -->
+              <a href="visual.html" class="btn btn-info" id="data" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">📈 Data Graphs </a> &nbsp;
+          
+              <!-- add patient button -->
+              <a href="addpatient.html" class="btn btn-primary" id="add" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">➕ Add Patient </a>
               <br>
 
               <br>
