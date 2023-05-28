@@ -1,0 +1,102 @@
+#include <Arduino.h>
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#endif
+
+#include <Firebase_ESP_Client.h>
+
+// Provide the token generation process info.
+#include <addons/TokenHelper.h>
+
+// DS18B20 temperature library
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+// Setup a oneWire instance to communicate with any OneWire device
+OneWire oneWire(D4);
+// Pass oneWire reference to DallasTemperature library
+DallasTemperature sensors(&oneWire);
+
+/* 1. Define the WiFi credentials */
+#define WIFI_SSID "FULLY VACCINATED 2.4G"
+#define WIFI_PASSWORD "yyxRn43R"
+
+/* 2. Define the API Key */
+#define API_KEY "AIzaSyDnNVNMvhv8GsziO7itIZ3Y8wXkgpxWcMc"
+
+/* 3. Define the project ID */
+#define FIREBASE_PROJECT_ID "feverwatch-87773"
+
+/* 4. Define the user Email and password that already registered or added in your project */
+#define USER_EMAIL "adam@gmail.com"
+#define USER_PASSWORD "123456"
+
+// Define Firebase Data object
+FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long lastUpdateMillis = 0;
+String documentPath = "patients/JtJHlojcoAdX9f0GjB21"; // Update with your document path
+
+void setup()
+{
+  Serial.begin(115200);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
+
+  /* Limit the size of response payload to be collected in FirebaseData */
+  fbdo.setResponseSize(2048);
+
+  Firebase.begin(&config, &auth);
+}
+
+void loop()
+{
+  // Request temperature readings
+  sensors.requestTemperatures();
+  float temp = sensors.getTempCByIndex(0);
+
+  // Check if it's time to update the temperature
+  if (millis() - lastUpdateMillis >= 10000)
+  {
+    lastUpdateMillis = millis();
+
+    // Update the temperature in Firestore
+    FirebaseJson content;
+    content.set("fields/temperature/doubleValue", String(temp).c_str());
+
+    Serial.print("Update a document... ");
+    if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw(), "temperature" ))
+      Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+    else
+      Serial.println(fbdo.errorReason());
+  }
+
+  // Other code or delays can be added here
+}
