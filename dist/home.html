@@ -181,7 +181,7 @@ tbody {
           <br>
 
           
-<!-- Create the modal markup -->
+<!-- Create the modal markup for Update -->
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -362,7 +362,6 @@ $(document).on("click", ".update", function () {
             age: $("#updateAge").val(),
             sex: $("#updateSex").val(),
             city: $("#updateCity").val(),
-            dates: firebase.firestore.FieldValue.serverTimestamp()
           };
 
           // Check if the updated data is the same as the current data

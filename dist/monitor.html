@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FeverWatch | Graphs/Charts</title>
+    <title>FeverWatch | Monitoring</title>
     <script defer src="./bundle.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -35,7 +35,7 @@
 
 body {
     background-image: url("bg.jpg");
-    height: 110vh;
+    height: 95vh;
 	  background-position: center;
  	  background-repeat: no-repeat;
     background-size: cover;
@@ -67,7 +67,7 @@ body {
 .card {
 
     width: 1250px;
-    height: 600px;
+    height: 550px;
     margin: 20px auto;
   
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
@@ -106,6 +106,24 @@ body {
 
 }
 
+#DateTime{
+
+  width: 150px;
+  height: 150px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  text-align: right;
+
+}
+
+.DateTime-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px;
+}
+
 .navbar {
   background: rgb(144,231,238);
   backdrop-filter: blur(10px);
@@ -116,7 +134,7 @@ body {
 .chart-container {
   display: flex;
   justify-content: space-between;
-  margin: 50px;
+  margin: 10px;
 }
 
 .chart-container canvas {
@@ -179,10 +197,20 @@ body {
           
           <div class="card">
             <div class="card-body success">
-              <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Body Temperature</h3><br>
-              <a href="home.html" class="btn btn-info" id="homie" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">🡰 Home </a> <br>
+              <h3 class="card-title" style="text-shadow: 2px 2px #ffffff;">Body Temperature</h3>
 
-              <br>
+              <!-- DateTime container/ positioning  -->
+              <div class="DateTime-container">
+              <a href="home.html" class="btn btn-info" id="homie" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1); position: fixed">🡰 Home </a> <br>
+
+              <!-- date and time  -->
+              <div class = "DateTime">
+                <h5><p style="text-shadow: 1px 1px #ffffff;">Date:  <span id="currentDate"></span></p></h5>
+                <h5><p style="text-shadow: 1px 1px #ffffff;">Time:  <span id="currentTime"></span></p></h5>
+                </div>
+              </div>
+
+              <!-- Datetime container end -->
 
               <!-- Patient 1 card end -->
             <div class="chart-container">
@@ -193,10 +221,13 @@ body {
                   <h4 class="card-title">
                     
                     <span id="temperatureCircle1"></span>
-                    <span id="patientName1" style="text-shadow: 1px 1px #ffffff;"></span>
+                    <span id="patientName1" style="text-shadow: 2px 2px #ffffff;"></span>
                     
                   </h5>
-                  <h5 class="card-text">Body temperature: <b> <span id="temperatureValue1"> </span> °C</b></h5>
+                  <h5 class="card-text" style="text-shadow: 1px 1px #ffffff;">Body temperature: <b> <span id="temperatureValue1"> </span> °C</b></h5>
+
+                  <!-- line chart -->
+                  <canvas id="temperatureChart"></canvas>
 
                 </div>
                 <!-- chart container start -->
@@ -208,10 +239,13 @@ body {
                   <h4 class="card-title">
 
                     <span id="temperatureCircle2"></span>
-                    <span id="patientName2" style="text-shadow: 1px 1px #ffffff;"></span>
+                    <span id="patientName2" style="text-shadow: 2px 2px #ffffff;"></span>
                     
                   </h5>
-                  <h5 class="card-text">Body temperature: <b> <span id="temperatureValue2"> </span> °C</b></h5>
+                  <h5 class="card-text" style="text-shadow: 1px 1px #ffffff;">Body temperature: <b> <span id="temperatureValue2"> </span> °C</b></h5>
+                  
+                  <!-- line chart -->
+                  <canvas id="temperatureChart2"></canvas>
 
                 </div>
               </div>   
@@ -265,8 +299,6 @@ const logoutBtn = document.querySelector("#logout");
 logoutBtn.addEventListener("click", ()=>{
 window.location.replace("index.html");
 });
-
-//charts codes
 
 // Retrieve data from Firestore
 
@@ -335,5 +367,188 @@ docRef2.onSnapshot((doc) => {
     console.log("No such document!");
   }
 });
+
+
+//First patient chart
+// Initialize chart variables
+let chart;
+let lastTemperature;
+
+// Function to create or update the chart
+function createOrUpdateChart(temperatureData) {
+  // Get the canvas element
+  const chartCanvas = document.getElementById("temperatureChart").getContext("2d");
+
+    // Update or create the chart
+    if (chart) {
+      // Update existing chart
+      chart.data.datasets[0].data.push(temperatureData);
+      if (chart.data.datasets[0].data.length > 6) {
+        chart.data.datasets[0].data.shift(); // Remove oldest data point if more than 6 points
+      }
+  
+      // Change point color based on temperature, red if not normal temperature
+      chart.data.datasets[0].pointBackgroundColor = temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+      chart.data.datasets[0].pointBorderColor = temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+      chart.data.datasets[0].borderColor = temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+
+      chart.update();
+    } else {
+      // Create new chart
+      chart = new Chart(chartCanvas, {
+        type: "line",
+        data: {
+          labels: ["10s", "20s", "30s", "40s", "50s", "60s"],
+          datasets: [
+            {
+              label: "Temperature",
+              data: [temperatureData], // Initialize with the first temperature data point
+              fill: false,
+              
+              //line styles color, red
+              borderColor: temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+              pointBackgroundColor: temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+              pointBorderColor: temperatureData < 36 || temperatureData >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+
+              pointRadius: 7, // Increase the point radius
+            },
+          ],
+        },
+        options: {
+          animations: {
+            tension: {
+              duration: 1000,
+              easing: 'linear',
+              from: 1.3,
+              to: 0,
+              loop: true,
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+  }
+  
+
+// Function to handle Firestore data changes
+function handleFirestoreDataChange(snapshot) {
+  if (snapshot.exists) {
+    const patientData = snapshot.data();
+    const temperatureData = patientData.temperature;
+
+    if (temperatureData !== lastTemperature) {
+      lastTemperature = temperatureData;
+      createOrUpdateChart(temperatureData);
+    }
+  }
+}
+
+// Subscribe to Firestore data changes
+docRef.onSnapshot(handleFirestoreDataChange);
+
+//second patient chart
+// Initialize chart variables
+let chart2;
+let lastTemperature2;
+
+// Function to create or update the chart
+function createOrUpdateChart2(temperatureData2) {
+  // Get the canvas element
+  const chartCanvas2 = document.getElementById("temperatureChart2").getContext("2d");
+
+    // Update or create the chart
+    if (chart2) {
+      // Update existing chart
+      chart2.data.datasets[0].data.push(temperatureData2);
+      if (chart2.data.datasets[0].data.length > 6) {
+        chart2.data.datasets[0].data.shift(); // Remove oldest data point if more than 6 points
+      }
+  
+      // Change point color based on temperature, red if not normal temperature
+      chart2.data.datasets[0].pointBackgroundColor = temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+      chart2.data.datasets[0].pointBorderColor = temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+      chart2.data.datasets[0].borderColor = temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)';
+
+      chart2.update();
+    } else {
+      // Create new chart
+      chart2 = new Chart(chartCanvas2, {
+        type: "line",
+        data: {
+          labels: ["10s", "20s", "30s", "40s", "50s", "60s"],
+          datasets: [
+            {
+              label: "Temperature",
+              data: [temperatureData2], // Initialize with the first temperature data point
+              fill: false,
+              
+              //line styles color, red
+              borderColor: temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+              pointBackgroundColor: temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+              pointBorderColor: temperatureData2 < 36 || temperatureData2 >= 38 ? 'red' : 'rgba(75, 192, 192, 1)',
+
+              pointRadius: 7, // Increase the point radius
+            },
+          ],
+        },
+        options: {
+          animations: {
+            tension: {
+              duration: 1000,
+              easing: 'linear',
+              from: 1.3,
+              to: 0,
+              loop: true,
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+  }
+  
+
+// Function to handle Firestore data changes
+function handleFirestoreDataChange2(snapshot) {
+  if (snapshot.exists) {
+    const patientData2 = snapshot.data();
+    const temperatureData2 = patientData2.temperature;
+
+    if (temperatureData2 !== lastTemperature2) {
+      lastTemperature2 = temperatureData2;
+      createOrUpdateChart2(temperatureData2);
+    }
+  }
+}
+
+// Subscribe to Firestore data changes
+docRef2.onSnapshot(handleFirestoreDataChange2);
+
+</script>
+
+<script>
+
+//date time code
+  function displayDateTime() {
+      var currentDateTime = new Date();
+      
+      var dateElement = document.getElementById("currentDate");
+      dateElement.textContent = currentDateTime.toDateString();
+      
+      var timeElement = document.getElementById("currentTime");
+      timeElement.textContent = currentDateTime.toLocaleTimeString();
+  }
+  
+  // Update the date and time every second
+  setInterval(displayDateTime, 1000);
 
 </script>

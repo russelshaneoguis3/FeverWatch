@@ -217,13 +217,11 @@ window.location.replace("index.html");
 });
 
 
+// Add function for Adding Patients
+const collectionName = "patients";
 
-//Add function for Adding Patients
-const collectionName = "patients"; 
-
-$("#addForm").submit(function (event) {
-  event.preventDefault();
-
+// Function to open the modal
+function openModal() {
   // Get the data from the form
   const data = {
     name: $("#name").val(),
@@ -231,7 +229,6 @@ $("#addForm").submit(function (event) {
     sex: $("#sex").val(),
     city: $("#city").val(),
     temperature: "0",
-    dates: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   // Create the modal
@@ -249,8 +246,8 @@ $("#addForm").submit(function (event) {
             Are you sure you want to add this patient to the list?
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger" id="cancelAdd" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);" onclick="closeModal()">✖️Cancel</button>
-            <button type="button" class="btn btn-success" id="confirmAdd" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">✔Confirm</button>
+            <button type="button" class="btn btn-danger" id="cancelAdd" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">Cancel</button>
+            <button type="button" class="btn btn-success" id="confirmAdd" style="box-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">Confirm</button>
           </div>
         </div>
       </div>
@@ -263,47 +260,68 @@ $("#addForm").submit(function (event) {
   // Show the modal
   $("#confirmModal").modal("show");
 
-  // Handle the confirmation
-  $("#confirmAdd").click(function() {
+  // Add the event listener to the Confirm button
+  $("#confirmAdd").on("click", function () {
     // Add the data to Firestore
     db2.collection(collectionName)
-      .add(data,  {merge: true})
+      .add(data)
       .then(() => {
         // Display a success message
         swal({
           title: "Added Successfully!",
           text: "Patient added to Lists",
           icon: "success",
-          button: "OK"
+          button: "OK",
         });
         // Redirect to home.html after the sweetalert fires, delay for 2 seconds
-      setTimeout(function(){
-      window.location.href = 'home.html';
-    }, 
-    2000); // delay for 2 seconds
+        setTimeout(function () {
+          window.location.href = "home.html";
+        }, 2000); // delay for 2 seconds
       })
       .catch((error) => {
         console.error("Error adding document: ", error);
       });
 
-    // Hide the modal
-    $("#confirmModal").modal("hide");
+    // Close the modal and reset the form
+    closeModal();
   });
+
+  // Add the event listener to the Cancel button
+  $("#cancelAdd").on("click", closeModal);
+
+  // Add the event listener to the modal header's close button
+  $(".modal-header .close").on("click", closeModal);
+}
+
+// Function to close the modal and reset the form
+function closeModal() {
+  // Remove the event listeners from the buttons
+  $("#confirmAdd").off("click", closeModal);
+  $("#cancelAdd").off("click", closeModal);
+  $(".modal-header .close").off("click", closeModal);
+
+  $("#confirmModal").modal("hide");
+  $("#addForm")[0].reset(); // Reset the form
+  $("#confirmModal").remove(); // Remove the modal from the DOM
+}
+
+// Attach Select2 dropdown menu to the modal
+$("#confirmModal").on("shown.bs.modal", function () {
+  $(".select2-dropdown").appendTo("#confirmModal");
 });
 
-</script>
+// Event listener to detect when the modal is closed
+$("#confirmModal").on("hidden.bs.modal", function () {
+  // Reset the form
+  $("#addForm")[0].reset();
+});
 
-<script>
- // Function to close the modal
- function closeModal() {
-    $("#confirmModal").modal("hide");
-  }
+// Event listener to handle the form submission
+$("#addForm").submit(function (event) {
+  event.preventDefault();
 
-  // Event listener to detect when the modal is closed
-  $("#confirmModal").on("hidden.bs.modal", function () {
-
-    // Reset the form
-    $("#confirmModal")[0].reset();
-  });
+  // Open the modal
+  openModal();
+});
 
 </script>
